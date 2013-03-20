@@ -38,6 +38,8 @@ class Maze(object):
                     self.blocks.append((x, nb_y))
                     if block == 2:
                         self.beacons.extend(((x, nb_y), (x+1, nb_y), (x, nb_y+1), (x+1, nb_y+1)))
+                else:
+                    print "Passable: ", x, y
 
     def draw(self):
         print self.blocks
@@ -112,15 +114,13 @@ class Maze(object):
     def show_path(self, path):
         turtle.color("red")
         turtle.shape('dot')
-        turtle.setposition(self.width, self.height)
-        turtle.stamp()
         for x,y in path:
             nb_y = self.height - y - 1
-            
-            print x, nb_y
+            scaled_x = int(x * self.one_px)
+            scaled_y = int(nb_y * self.one_px)
             turtle.setposition(x, nb_y)
-        #turtle.setheading(90 - robot.h)
-            turtle.stamp()
+            turtle.down()
+        turtle.up()
         turtle.update()
         
     def show_robot(self, robot):

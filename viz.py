@@ -40,7 +40,8 @@ print 'Drawing world'
 world.draw()
 
 print 'Showing the GPS path'
-world.show_path(world_map.get_gps_line())
+print world_map.get_center_line()
+world.show_path(world_map.get_center_line())
 
 #print 'Reading sensor information'
 
