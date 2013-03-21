@@ -19,7 +19,8 @@ class LandmarkMap(object):
         
         for ptStr in content:
             self.landmarks.append(tuple(map(float, ptStr.split(','))))
-        
+        print self.landmarks
+
     def save(self, mapFile):
         with open(mapFile, 'w') as f:
             for pt in self.landmarks:

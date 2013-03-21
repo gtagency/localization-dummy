@@ -3,14 +3,13 @@
 # and build a static map.
 #
 
-from mapping.landmarkmap import LandmarkMap
-from sensors.datasource  import FileDataSource
-from sensors.fusion      import Averager
-from sensors.gps         import GPS
-from sensors.laser       import RawLaserRangeFinder
-from sensors.ultrasonic  import RawUltrasonicRangeFinder
-
-import math
+from mapping.landmarkmap   import LandmarkMap
+from mapping.pointresolver import PointResolver
+from sensors.datasource    import FileDataSource
+from sensors.fusion        import Averager
+from sensors.gps           import GPS
+from sensors.laser         import RawLaserRangeFinder
+from sensors.ultrasonic    import RawUltrasonicRangeFinder
 
 METERS_PER_DEGREE_LAT = 111000
 METERS_PER_DEGREE_LNG = 111000
@@ -31,40 +30,28 @@ right_sonar = RawUltrasonicRangeFinder(right_sonar_ds, 5.0, 240)
 left_depth   = Averager(left_laser,  left_sonar)
 right_depth  = Averager(right_laser, right_sonar)
 
-theMap = LandmarkMap()
+theMap   = LandmarkMap()
+resolver = PointResolver()
 
-lastlat = None
-lastlng = None
 while gps_ds.hasNext():
     lat, lng = gps.sample()
-    if lastlat == None:
-        lastlat = lat
-        lastlng = lng
+    
+    resolver.update(lat, lng)
+    
+    if resolver.heading == None:
         # burn one depth sample
         right_depth.sample()
         continue
-    # compute heading...this is required to make sense of the range finder data
-    heading = 180 * math.atan2((lat - lastlat), (lng - lastlng)) / math.pi
-    if heading < 0:
-        heading = 360 + heading
-    #print lastlat, lastlng, lat, lng, lat - lastlat, lng - lastlng, heading
-    lastlat = lat
-    lastlng = lng
-
+        
+    
     # take a sample from the right laser range finder, and determine it's lat/long
     # based on the GPS position
     d_right = right_depth.sample()
     if d_right != RawLaserRangeFinder.UNKNOWN and d_right < 2.4:
-        angle = heading - 90
-        if angle < 0:
-            angle = 360 + angle
-        angle = 2 * math.pi * angle / 360
-        print math.sin(angle), math.cos(angle), angle
-        landlat = lat + d_right * math.sin(angle)
-        landlng = lng + d_right * math.cos(angle)
+        landlat, landlng = resolver.resolve(-90, d_right)
         
-        print "Landmark!", lat, lng, landlat, landlng, heading, d_right
-        theMap.addLandmark((lat, lng))
+        print "Landmark!", lat, lng, landlat, landlng, resolver.heading, d_right
+        theMap.addLandmark((landlat, landlng))
 
 theMap.save('landmarks.map')
         
