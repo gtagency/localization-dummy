@@ -8,6 +8,9 @@ METERS_PER_DEGREE_LAT = 111000
 METERS_PER_DEGREE_LNG = 111000
 SCALE = 1.0/10.0
 
+from sensors.datasource import FileDataSource
+from sensors.gps import GPS
+
 class DummyGPSMap:
     def __init__(self):
         
@@ -20,20 +23,16 @@ class DummyGPSMap:
         self.build_center_line()
         
     def open_and_read_GPS_file(self, fname):
-        with open(fname) as f:
-            content = f.readlines()
-
-        # pop off the header row (LATITUDE, LONGITUDE)
-        if "TUDE" in content[0]:
-            content.pop(0);
+        ds  = FileDataSource(fname, lambda one: map(float, one.split(' ')))
+        gps = GPS(ds)
 
         lats =[]
         longs=[]
 
-        for coord in content:
-            parts = coord.split(' ');
-            lats.append(float(parts[0]))
-            longs.append(float(parts[1]))
+        while ds.hasNext():
+            pt = gps.sample();
+            lats.append(pt[0])
+            longs.append(pt[1])
 
         return lats, longs
         
